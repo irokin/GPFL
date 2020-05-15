@@ -2,15 +2,9 @@ build/
 .gradle/
 gradle/
 .idea/
-experiments/
 out/
 .settings/
 .classpath
 .project
-fixed/
-AnyBURL-Pred
 bin/
-rqExps
-reports
-random/
-releaseData
+data/
