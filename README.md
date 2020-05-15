@@ -15,7 +15,7 @@ Features:
 - Gradle >= 5.6.4
 
 ### Getting Started
-We start by learning rules for all relationship types (predicates) in the UWCSE dataset, a small knowledge graph in the academia domain. Please download the dataset from [here](https://www.dropbox.com/s/64ke2xpxz43fhg3/UWCSE.zip?dl=0), and unzip into a folder named `data` situated in the GPFL home folder. As GPFL is deeply coupled with the Neo4j core API, it requires data to be presented as a Neo4j database (in this example, the UWCSE database is at folder `data/UWCSE/databases`). Now, run following command to learn rules for all relationship types in UWCSE:
+We start by learning rules for all relationship types (predicates) in the UWCSE dataset, a small knowledge graph in the academia domain. Please download the dataset from [here](https://www.dropbox.com/s/64ke2xpxz43fhg3/UWCSE.zip?dl=1), and unzip into a folder named `data` situated in the GPFL home folder. As GPFL is deeply coupled with the Neo4j core API, it requires data to be presented as a Neo4j database (in this example, the UWCSE database is at folder `data/UWCSE/databases`). Now, run following command to learn rules for all relationship types in UWCSE:
 ```
 gradle run --args="-c data/UWCSE/config.json -r"
 ```
