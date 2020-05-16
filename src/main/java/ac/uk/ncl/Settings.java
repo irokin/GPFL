@@ -11,10 +11,33 @@ public class Settings {
     public static boolean POST_FILTERING = false;
 
     // Experimental Settings
-    public static int INS_RULE_CAP = 20000000;
+
+    /**
+     * Max number of instantiated rules allowed to be learned for a target.
+     */
+    public static int INS_RULE_CAP = 15000000;
+
+    /**
+     * In rule application, the max number of predictions allowed
+     * for a type of instantiated rule.
+     */
+    public static int SUGGESTION_CAP = 15000000;
+
     public static int PREDICTION_RULE_CAP = 20;
+
+    /**
+     * Max time on specialization
+     */
     public static int SPEC_TIME = Integer.MAX_VALUE;
+
+    /**
+     * Max time on generating essential rules.
+     */
     public static int ESSENTIAL_TIME = Integer.MAX_VALUE;
+
+    /**
+     * Max time on generalization.
+     */
     public static int GEN_TIME = Integer.MAX_VALUE;
     public static int RANDOM_WALKERS = 10;
     public static boolean USE_SIGMOID = false;
@@ -35,12 +58,6 @@ public class Settings {
     public static String EVAL_PROTOCOL = "All";
 
     public static int MAX_RECURSION_DEPTH = 1000;
-
-    /**
-     * In rule application, for an abstract rule, the max number of predictions allowed
-     * for a type of instantiated rule.
-     */
-    public static int SUGGESTION_CAP = 20000000;
 
     /**
      *  Select which rule quality measure to use from:

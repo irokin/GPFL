@@ -5,6 +5,7 @@ import ac.uk.ncl.core.Evaluator;
 import ac.uk.ncl.model.GPFL;
 import ac.uk.ncl.utils.Helpers;
 import ac.uk.ncl.utils.IO;
+import ac.uk.ncl.validations.Ensemble;
 import ac.uk.ncl.validations.ValidRuleEvalEfficiency;
 import ac.uk.ncl.validations.ValidRuleQuality;
 import org.apache.commons.cli.*;
@@ -70,6 +71,9 @@ public class Run {
 
         options.addOption(Option.builder("ov").longOpt("overfitting")
                 .desc("Perform the overfitting analysis.").build());
+
+        options.addOption(Option.builder("en").longOpt("ensemble")
+                .desc("Run in ensemble mode.").build());
 
         options.addOption(Option.builder("h").longOpt("help").desc("Print help information.").build());
         String header = "GPFL is a probabilistic rule learner optimized to learn instantiated first-order logic rules from knowledge graphs. " +
@@ -153,6 +157,11 @@ public class Run {
                 if (cmd.hasOption("a")) {
                     GPFL system = new GPFL(config, "apply_log");
                     system.apply();
+                }
+
+                if (cmd.hasOption("en")) {
+                    Ensemble ensemble = new Ensemble(config, "ensemble");
+                    ensemble.selectBestSolutions();
                 }
             }
         } catch (ParseException e) {

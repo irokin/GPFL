@@ -7,4 +7,4 @@ out/
 .classpath
 .project
 bin/
-data/
+allData

@@ -19,22 +19,6 @@ public class GraphBuilder {
 
     private static Map<String, Long> map = new HashMap<>();
 
-    private static class CreateTripleTask implements Runnable {
-        String line;
-        BlockingQueue<localTriple> tripleQueue;
-
-        CreateTripleTask(String line, BlockingQueue<localTriple> tripleQueue) {
-            this.line = line;
-            this.tripleQueue = tripleQueue;
-
-        }
-
-        @Override
-        public void run() {
-            tripleQueue.add(new localTriple(line));
-        }
-    }
-
     public static GraphDatabaseService populateGraphFromTriples(File graphFile, File trainFile) {
         System.out.println("# GPFL System - Neo4j Graph Database Construction: ");
         GraphDatabaseService graph = createEmptyGraph(graphFile);

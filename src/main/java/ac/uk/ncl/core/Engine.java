@@ -10,6 +10,7 @@ import com.google.common.collect.MultimapBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.traversal.Traverser;
@@ -79,7 +80,7 @@ public abstract class Engine {
         Settings.RANDOMLY_SELECTED_RELATIONS = Helpers.readSetting(args, "randomly_selected_relations", Settings.RANDOMLY_SELECTED_RELATIONS);
         Settings.RANDOM_WALKERS = Helpers.readSetting(args, "random_walkers", Settings.RANDOM_WALKERS);
         Settings.SUPPORT = Helpers.readSetting(args, "support", Settings.SUPPORT);
-        Settings.CONF = Helpers.readSetting(args, "standard_conf", Settings.CONF);
+        Settings.CONF = Helpers.readSetting(args, "conf", Settings.CONF);
         Settings.HEAD_COVERAGE = Helpers.readSetting(args, "head_coverage", Settings.HEAD_COVERAGE);
         Settings.QUALITY_MEASURE = Helpers.readSetting(args, "quality_measure", Settings.QUALITY_MEASURE);
         Settings.VALID_PRECISION = Helpers.readSetting(args, "valid_precision", Settings.VALID_PRECISION);
@@ -232,11 +233,14 @@ public abstract class Engine {
         String home = args.getString("home");
         Settings.NEO4J_IDENTIFIER = Helpers.readSetting(args, "neo4j_identifier", Settings.NEO4J_IDENTIFIER);
         double[] splitRatio = IO.readSplitRatio(args.getJSONArray("split_ratio"));
-        JSONArray array = args.getJSONArray("target_relation");
         Set<String> targets = new HashSet<>();
-        for (Object o : array) {
-            targets.add((String) o);
-        }
+
+        try {
+            JSONArray array = args.getJSONArray("target_relation");
+            for (Object o : array) {
+                targets.add((String) o);
+            }
+        } catch (JSONException e) { }
 
         System.out.println(MessageFormat.format("# Split Ratio (Train/Test/Valid): {0}/{1}/{2}"
                 , splitRatio[0]
@@ -615,11 +619,11 @@ public abstract class Engine {
         }
 
         Set<String> selectedTargets = new HashSet<>();
-        JSONArray array = args.getJSONArray("target_relation");
-        if(!array.isEmpty()) {
+        try {
+            JSONArray array = args.getJSONArray("target_relation");
             for (Object o : array) {
                 String target = (String) o;
-                if(targets.contains(target))
+                if (targets.contains(target))
                     selectedTargets.add(target);
                 else {
                     System.err.println("# Selected Targets do not exist in the test file.");
@@ -627,13 +631,15 @@ public abstract class Engine {
                 }
             }
             targets = selectedTargets;
-        } else {
-            int randomSelect = args.getInt("randomly_selected_relations");
-            if(randomSelect != 0) {
-                List<String> targetList = new ArrayList<>(targets);
-                Collections.shuffle(targetList);
-                targets = new HashSet<>(targetList.subList(0, Math.min(randomSelect, targetList.size())));
-            }
+        } catch (JSONException e) {
+            try {
+                int randomSelect = args.getInt("randomly_selected_relations");
+                if (randomSelect != 0) {
+                    List<String> targetList = new ArrayList<>(targets);
+                    Collections.shuffle(targetList);
+                    targets = new HashSet<>(targetList.subList(0, Math.min(randomSelect, targetList.size())));
+                }
+            } catch (JSONException ignored) { }
         }
     }
 
