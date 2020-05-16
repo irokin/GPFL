@@ -1,6 +1,6 @@
-## GPFL - Graph Path Feature Learning
+# GPFL - Graph Path Feature Learning
 
-### Overview
+## Overview
 GPFL is a probabilistic logical rule learner optimized to mine instantiated rules that contain constants from knowledge graphs. This repository contains code necessary to run the GPFL system.
 
 > Features:
@@ -10,11 +10,11 @@ GPFL is a probabilistic logical rule learner optimized to mine instantiated rule
 - Adaptive to machines with different specifications through parameter tuning
 - Toolkits for data preparation and rule analysis
 
-### Requirements
+## Requirements
 - Java >= 1.8
 - Gradle >= 5.6.4
 
-### Inducing Logical Rules from Knowledge Graphs
+## Inducing Logical Rules from Knowledge Graphs
 <p align="center">
     <img src="https://www.dropbox.com/s/0pss5h7vl8ac9t5/UWCSE-example.png?raw=1">
 </p>
@@ -31,24 +31,23 @@ and used to explain concept `ADVISED_BY` when translated in logic term:
 ```
 ADVISED_BY(X, Y) <- PUBLISHES(X, A), PUBLISHES(Y, A)
 ```
-where `PUBLISHES(X, A), PUBLISHES(Y, A)` is the conditions and `ADVISED_BY(X, Y)` the consequence. This kind of rules that do not contain constants are known as abstract rules.
+where `PUBLISHES(X, A), PUBLISHES(Y, A)` is the premises and `ADVISED_BY(X, Y)` the consequence. This kind of rules that do not contain constants are known as abstract rules.
 
 GPFL also generates instantiated rules that contain constants. For instance, from path:
 ```
 ADVISED_BY(person314, person415), PUBLISHES(person415, title0), PUBLISHES(person240, title0) 
 ```
-we can have an instantiated rule specifing the correlation pattern (used as constraints in inference) between `person415` and `person240` as:
+we can derive an instantiated rule specifying the correlation pattern (used as constraints in inference) between `person314` and `person240` as:
 ```
-ADVISED_BY(X, person415) <- PUBLISHES(X, A), PUBLISHES(person240, A)
+ADVISED_BY(person314, Y) <- PUBLISHES(Y, A), PUBLISHES(person240, A)
 ```
 
-### Getting Started
-
+## Getting Started
 
 We start by learning rules from the UWCSE knowledge graph, a small graph in the academia domain. In `data/UWCSE` folder you can find the inputs GPFL requires for learning:
 - `data/<train/test/valid>.txt`: triple files for training, test and validation.
 - `data/<annotated_train/test/valid>.txt`: as GPFL runs on Neo4j database, we use indexing to optimize data querying. These files contain annotated training, test, validation triples with Neo4j ids.
-- `data/databases`: contains the Neo4j database. It can also be conveniently used for EDA with [Neo4j Broswer](https://neo4j.com/developer/neo4j-browser/) and its [Data Science ecosystem](https://neo4j.com/graph-data-science-library/).
+- `data/databases`: contains the Neo4j database. It can also be conveniently used for EDA with [Cypher](https://neo4j.com/developer/cypher-query-language/) and its [Data Science ecosystem](https://neo4j.com/graph-data-science-library/).
 - `config.json`: the GPFL configuration file.
 
 Now we give an introduction on some options in a GPFL configuration file:
@@ -69,7 +68,7 @@ gradle run --args="-c data/UWCSE/config.json -r"
 ```
 where option `-c` specifies the location of the GPFL configuration file, and `-r` executes the chain of rule learning, application and evaluation for link prediction. 
  
-Once the program finishes, results will be saved to folder `data/UWCSE/ins3-car3`. Now navigate to the result folder, file `rules.txt` stores all of the learned rules. To get the top rules, run following command to sort rules by quality:
+Once the program finishes, results will be saved at folder `data/UWCSE/ins3-car3`. Now navigate to the result folder, file `rules.txt` records all learned rules. To get the top rules, run following command to sort rules by quality:
 ```
 gradle run --args="-or data/UWCSE/ins3-car3"
 ```
@@ -78,9 +77,9 @@ In the sorted `rules.txt` file, each line has values:
 Type  Rule                                                 Conf     HC       VP       Supp  BG
 CAR   ADVISED_BY(X,Y) <- PUBLISHES(X,V1), PUBLISHES(Y,V1)  0.09333  0.31343  0.03015  21    220
 ```
-where `conf` is confidence, `HC` head coverage, `VP` validation precision, `supp` support, and `BG` body grounding (total predictions).
+where `conf` is the confidence, `HC` head coverage, `VP` validation precision, `supp` support, and `BG` body grounding (total predictions).
 
-To check the quality/type/length distribution of the learned rule, run:
+To check the quality/type/length distribution of the learned rules, run:
 ```
 gradle run --args="-c data/UWCSE/config.json -ra"
 ```
@@ -117,9 +116,9 @@ BAR	PUBLISHES(person211,Y) <- PUBLISHES(V1,Y), PUBLISHES(V1,title241)	0.325
 ```
 where the following rules are top rules that suggest candidate `person211`. Therefore, these rules can be used to explain in a data-driven way why `person211` publishes paper `title88`. 
 
-To find detailed evaluation results, please refer to `eval_log.txt` file.
+To find detailed evaluation results, please refer to the `eval_log.txt` file in the result folder.
 
-### GPFL Recipes
+## GPFL Recipes
 In this section, we provide recipes for different scenarios. To print help info about GPFL, run:
 ```
 gradle run --args="-h"
@@ -129,7 +128,7 @@ gradle run --args="-h"
 ```
 gradle shadowjar
 ```
-The generated jar file will be in folder `build/libs`.
+The generated jar file will be at `build/libs`.
 
 #### Build Neo4j database from a single triple file
 Given home folder `Foo`, place your triple file in `Foo/data/` and rename the triple file to `train.txt`, then run:
@@ -216,7 +215,7 @@ GPFL is memory-intensive in that the volume of instantiated rules is often inord
 - `spec_time`: max time (in seconds) to run specialization procedure (creating instantiated rules).
 - `thread_number`: number of running threads.
 
-### Experiment Reproducibility
+## Experiment Reproducibility
 All experiments reported in the paper is carried out on AWS EC2 r5.2xlarge instances. Please download experiment datasets [here](https://www.dropbox.com/s/o6zqnx7ditk6pw1/data.zip?dl=1), and unzip into `data` folder.  
 
 #### Efficiency Evaluation
@@ -239,6 +238,6 @@ gradle run --args="-c Foo/config.json -ov"
 gradle run --args="-c Foo/config.json -r"
 ```
 
-### Citation
+## Citation
 Paper is to be announced by arXiv.
 
