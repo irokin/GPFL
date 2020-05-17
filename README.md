@@ -199,6 +199,13 @@ Given home folder `Foo` that contains configuration file `config.json` with `hom
 gradle run --args="-c Foo/config.json -en" 
 ```
 
+#### On overfitting rules
+The `rules.txt` file produced by running `-r` and `-l` contains overfitting rules regardless of the value of the `overfitting_factor`, only when evaluating the rules for precision or link prediction, the overfitting rules in `rules.txt` will be removed (in memory, still persistent in the file). To create a view of non-overfitting rules, set `overfitting_factor` to a value > 0, then run:
+```shell script
+gradle run --args="-c Foo/config.json -ovf" 
+```  
+the generated view will be at `Foo/out/refined.txt`.
+
 #### Tuning time and space constraints
 GPFL is memory-intensive in that the volume of instantiated rules is often inordinate, and the intention of discovering top rules to explain existing facts requires saving rules in memory. Rule learning is also time-consuming on large knowledge graphs. GPFL allows the use of time and space constraints to adapt the system to various task requirements. Here we introduce options you can tune in `config.json` file if you find the runtime is too long and out-of-memory happens too often. 
 
