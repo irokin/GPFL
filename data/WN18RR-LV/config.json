@@ -21,8 +21,8 @@
   "quality_measure": "smoothedConf",
 
   "essential_time": 60,
-  "spec_time": 120,
-  "gen_time": 20,
+  "spec_time": 360,
+  "gen_time": 40,
 
   "overfitting_factor": 0
 }
