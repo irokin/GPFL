@@ -19,7 +19,7 @@ public class test {
 
     @Test
     public void Apply() {
-        File config = new File("rqExps/UWCSE/config.json");
+        File config = new File("data/UWCSE/config.json");
         GPFL system = new GPFL(config, "apply_log");
         system.apply();
     }
@@ -122,6 +122,12 @@ public class test {
     @Test
     public void orderInsRules() {
         IO.orderRuleIndexFile(new File("rqExps/FB15K-237/insRule.txt"));
+    }
+
+    @Test
+    public void refineRules() {
+        File config = new File("data/UWCSE/config.json");
+        IO.filterNonOverfittingRules(config);
     }
 
     @Test

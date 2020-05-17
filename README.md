@@ -193,9 +193,6 @@ Given your `predictions.txt` produced by AnyBURL is placed in `Foo`, run:
 gradle run --args="-ea Foo"
 ```
 
-#### Filtering out overfitting rules
-To have predictions and verifications generated with overfitting rules removed, you can set the `overfitting factor` by adding line `"overfitting_factor": 0.1` to `config.json`, then perform learning or application.
-
 #### Ensemble mode
 Given home folder `Foo` that contains configuration file `config.json` with `home` option set to `Foo`, and you have produced result folders `r1`, `r2` and `r3` (each should contain `eval_log.txt` file) and placed them in `Foo`, if you want to run in ensemble mode to aggregate the best performing rules over different configurations, add line `"ensemble_bases": ["r1", "r2", "r3"]` and optional change `out` option to `ensemble`, run:
 ```shell script
@@ -216,26 +213,41 @@ GPFL is memory-intensive in that the volume of instantiated rules is often inord
 - `thread_number`: number of running threads.
 
 ## Experiment Reproducibility
-All experiments reported in the paper is carried out on AWS EC2 r5.2xlarge instances. Please download experiment datasets [here](https://www.dropbox.com/s/o6zqnx7ditk6pw1/data.zip?dl=1), and unzip into `data` folder.  
+All experiments reported in the paper is carried out on AWS EC2 r5.2xlarge instances. Please download experiment datasets [here](https://www.dropbox.com/s/38t2e11n4w6xv6w/data.zip?dl=1), and unzip into `data` folder.  
 
 #### Efficiency Evaluation
 ```shell script
-gradle run --args="-c Foo/config.json -ert"
+gradle run --args="-c data/<dataset>/config.json -ert"
 ```
 
 #### Precision
 ```shell script
-gradle run --args="-c Foo/config.json -p"
+gradle run --args="-c data/<dataset>/config.json -p"
 ```
 
 #### Overfitting Analysis
 ```shell script
-gradle run --args="-c Foo/config.json -ov"
+gradle run --args="-c data/<dataset>/config.json -ov"
 ```
 
 #### Knowledge Graph Completion
+For evaluating FB15K-237 in the default setting, run:
 ```shell script
-gradle run --args="-c Foo/config.json -r"
+gradle run --args="-c data/FB15K-237/config.json -r"
+```
+On WN18RR, run:
+```shell script
+gradle run --args="-c data/WN18RR/config.json -r"
+```
+
+To evaluate the impact of removal of overffiting rules on link prediction performance, we have re-split `FB15K-237` and `WN18RR` in a 6:2:2 ratio for larger validation sets. The corresponding re-splits can be found in folder `data/FB15K-237-LV` and `WN18RR-LV`. To evaluate FB15K-237 in the random setting with validation, change the value of option `overfitting_factor` from 0 to 0.1 in file `data/FB15K-237-LV/config.json`, then run:
+```shell script
+gradle run --args="-c data/FB15K-237-LV/config.json -r"
+```
+
+For evaluation with validation on WN18RR, change the value of `overfitting_factor` to 0.1 in file `data/WN18RR-LV/config.json`, then run:
+```shell script
+gradle run --args="-c data/WN18RR-LV/config.json -r"
 ```
 
 ## Citation

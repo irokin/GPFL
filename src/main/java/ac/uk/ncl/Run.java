@@ -75,6 +75,9 @@ public class Run {
         options.addOption(Option.builder("en").longOpt("ensemble")
                 .desc("Run in ensemble mode.").build());
 
+        options.addOption(Option.builder("ovf").longOpt("overfittingFile")
+                .desc("Create a view of non-overfitting rules and save to refined.txt file.").build());
+
         options.addOption(Option.builder("h").longOpt("help").desc("Print help information.").build());
         String header = "GPFL is a probabilistic rule learner optimized to learn instantiated first-order logic rules from knowledge graphs. " +
                 "For more information, please refer to https://github.com/irokin/GPFL";
@@ -162,6 +165,10 @@ public class Run {
                 if (cmd.hasOption("en")) {
                     Ensemble ensemble = new Ensemble(config, "ensemble");
                     ensemble.selectBestSolutions();
+                }
+
+                if (cmd.hasOption("ovf")) {
+                    IO.filterNonOverfittingRules(config);
                 }
             }
         } catch (ParseException e) {

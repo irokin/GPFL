@@ -7,6 +7,7 @@ import com.google.common.collect.MultimapBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
@@ -401,6 +402,46 @@ public class IO {
         }
 
         System.out.println("# Rules are ordered.");
+    }
+
+    public static void filterNonOverfittingRules(File config) {
+        JSONObject object = Helpers.buildJSONObject(config);
+        String home = object.getString("home");
+        File out = new File(home, object.getString("out"));
+        double overfittingFactor = object.getDouble("overfitting_factor");
+        File ruleFile = new File(out, "rules.txt");
+        File outFile = new File(out, "refined.txt");
+
+        System.out.println("\n# GPFL System - Extracting Non-overfitting Rules from File: " + ruleFile.getPath());
+        System.out.println("# overfitting factor = " + overfittingFactor);
+
+        Map<String, Double> map = new HashMap<>();
+        try(LineIterator l = FileUtils.lineIterator(ruleFile)) {
+            while(l.hasNext()) {
+                String line = l.nextLine();
+                String[] values = line.split("\t");
+                if(!line.equals("")) {
+                    if(Double.parseDouble(values[4]) >= overfittingFactor)
+                        map.put(line, Double.parseDouble(line.split("\t")[2]));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+        List<Map.Entry<String, Double>> list = map.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toList());
+        try(PrintWriter writer = new PrintWriter(new FileWriter(outFile, false))) {
+            for (Map.Entry<String, Double> entry : list) {
+                writer.println(entry.getKey());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+        System.out.println("# Refined rule are saved to: " + outFile);
+        System.out.println("# Rules are refined and ordered.");
     }
 
     public static Set<Rule> readRules(String target, File ruleIndexHome, GraphDatabaseService graph) {

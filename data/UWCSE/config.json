@@ -10,7 +10,7 @@
   "conf": 0.001,
   "support": 3,
   "head_coverage": 0.001,
-  "overfitting_factor": 0,
+  "overfitting_factor": 0.01,
 
   "saturation": 0.99,
   "batch_size": 30000,
