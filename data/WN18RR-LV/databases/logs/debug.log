@@ -1200,7 +1200,7 @@
 2020-05-17 10:02:52.424+0000 INFO [o.n.i.d.DiagnosticsManager] user.timezone = Europe/London
 2020-05-17 10:02:52.424+0000 INFO [o.n.i.d.DiagnosticsManager] file.encoding = windows-1252
 2020-05-17 10:02:52.424+0000 INFO [o.n.i.d.DiagnosticsManager] user.name = guiro
-2020-05-17 10:02:52.424+0000 INFO [o.n.i.d.DiagnosticsManager] sun.java.command = ac.uk.ncl.Run -c data/WN18RR-LV/config.json -r
+2020-05-17 10:02:52.424+0000 INFO [o.n.i.d.DiagnosticsManager] sun.java.command = uk.ac.ncl.Run -c data/WN18RR-LV/config.json -r
 2020-05-17 10:02:52.424+0000 INFO [o.n.i.d.DiagnosticsManager] sun.arch.data.model = 64
 2020-05-17 10:02:52.425+0000 INFO [o.n.i.d.DiagnosticsManager] user.language = en
 2020-05-17 10:02:52.425+0000 INFO [o.n.i.d.DiagnosticsManager] awt.toolkit = sun.awt.windows.WToolkit

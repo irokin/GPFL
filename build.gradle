@@ -24,7 +24,7 @@ dependencies {
 }
 
 application {
-    mainClassName = 'ac.uk.ncl.Run'
+    mainClassName = 'uk.ac.ncl.Run'
     applicationDefaultJvmArgs = ['-Xmx8G']
 }
 
@@ -36,5 +36,5 @@ test {
 
 shadowJar {
     mergeServiceFiles()
-    manifest { attributes "Main-Class": "ac.uk.ncl.Run"}
+    manifest { attributes "Main-Class": "uk.ac.ncl.Run"}
 }

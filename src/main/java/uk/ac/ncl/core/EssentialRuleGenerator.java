@@ -1,7 +1,7 @@
 package uk.ac.ncl.core;
 
 import uk.ac.ncl.Settings;
-import ac.uk.ncl.structure.*;
+import uk.ac.ncl.structure.*;
 import uk.ac.ncl.structure.Rule;
 import uk.ac.ncl.structure.Template;
 import uk.ac.ncl.utils.Helpers;

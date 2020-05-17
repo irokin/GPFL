@@ -1,8 +1,8 @@
 package uk.ac.ncl.model;
 
 import uk.ac.ncl.Settings;
-import ac.uk.ncl.core.*;
-import ac.uk.ncl.structure.*;
+import uk.ac.ncl.core.*;
+import uk.ac.ncl.structure.*;
 import uk.ac.ncl.utils.Helpers;
 import uk.ac.ncl.utils.IO;
 import uk.ac.ncl.utils.Logger;

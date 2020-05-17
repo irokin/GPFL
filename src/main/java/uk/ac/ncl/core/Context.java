@@ -1,7 +1,7 @@
 package uk.ac.ncl.core;
 
 import uk.ac.ncl.Settings;
-import ac.uk.ncl.structure.*;
+import uk.ac.ncl.structure.*;
 import uk.ac.ncl.structure.Atom;
 import uk.ac.ncl.utils.IO;
 import com.google.common.collect.*;

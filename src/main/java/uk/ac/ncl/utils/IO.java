@@ -1,7 +1,7 @@
 package uk.ac.ncl.utils;
 
 import uk.ac.ncl.Settings;
-import ac.uk.ncl.structure.*;
+import uk.ac.ncl.structure.*;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import org.apache.commons.io.FileUtils;

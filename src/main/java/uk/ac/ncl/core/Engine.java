@@ -2,8 +2,8 @@ package uk.ac.ncl.core;
 
 import uk.ac.ncl.Settings;
 import uk.ac.ncl.analysis.AnalysisUtils;
-import ac.uk.ncl.structure.*;
-import ac.uk.ncl.utils.*;
+import uk.ac.ncl.structure.*;
+import uk.ac.ncl.utils.*;
 import uk.ac.ncl.structure.*;
 import uk.ac.ncl.utils.GraphBuilder;
 import uk.ac.ncl.utils.Helpers;
