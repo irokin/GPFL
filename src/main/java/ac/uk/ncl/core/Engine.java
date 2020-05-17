@@ -621,13 +621,15 @@ public abstract class Engine {
         Set<String> selectedTargets = new HashSet<>();
         try {
             JSONArray array = args.getJSONArray("target_relation");
-            for (Object o : array) {
-                String target = (String) o;
-                if (targets.contains(target))
-                    selectedTargets.add(target);
-                else {
-                    System.err.println("# Selected Targets do not exist in the test file.");
-                    System.exit(-1);
+            if(!array.isEmpty()) {
+                for (Object o : array) {
+                    String target = (String) o;
+                    if (targets.contains(target))
+                        selectedTargets.add(target);
+                    else {
+                        System.err.println("# Selected Targets do not exist in the test file.");
+                        System.exit(-1);
+                    }
                 }
             }
             targets = selectedTargets;
