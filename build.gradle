@@ -4,7 +4,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 
-group 'ac.uk.ncl'
+group 'uk.ac.ncl'
 version '0.1-public'
 
 sourceCompatibility = 1.8
