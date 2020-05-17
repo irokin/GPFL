@@ -1,5 +1,5 @@
 {
-  "home": "data/FB15K-237",
+  "home": "data/FB15K-237-LV",
   "out": "ins3-car3",
   "target_relation": [],
   "randomly_selected_relations": 0,
