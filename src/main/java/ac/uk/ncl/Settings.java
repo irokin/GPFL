@@ -45,7 +45,7 @@ public class Settings {
 
     //###############End#################
 
-    public static boolean ALLOW_INS_REVERSE = true;
+    public static boolean ALLOW_INS_REVERSE = false;
     public static double VALID_PRECISION = 0;
     public static double HIGH_QUALITY = 1;
 

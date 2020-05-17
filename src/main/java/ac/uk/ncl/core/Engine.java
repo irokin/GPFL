@@ -631,8 +631,8 @@ public abstract class Engine {
                         System.exit(-1);
                     }
                 }
+                targets = selectedTargets;
             }
-            targets = selectedTargets;
         } catch (JSONException e) {
             try {
                 int randomSelect = args.getInt("randomly_selected_relations");
