@@ -1,7 +1,7 @@
 # GPFL - Graph Path Feature Learning
 
 ## Overview
-GPFL is a probabilistic logical rule learner optimized to mine instantiated rules that contain constants from knowledge graphs. This repository contains code necessary to run the GPFL system.
+GPFL ([paper](https://arxiv.org/pdf/2003.06071)) is a probabilistic logical rule learner optimized to mine instantiated rules that contain constants from knowledge graphs. This repository contains code necessary to run the GPFL system.
 
 > Features:
 - Significantly faster than existing systems at mining quality instantiated rules
@@ -258,5 +258,15 @@ gradle run --args="-c data/WN18RR-LV/config.json -r"
 ```
 
 ## Citation
-Paper is to be announced by arXiv.
+If you use this codebase, please cite our paper:
+```
+@misc{gu2020learning,
+    title={Towards Learning Instantiated Logical Rules from Knowledge Graphs},
+    author={Yulong Gu and Yu Guan and Paolo Missier},
+    year={2020},
+    eprint={2003.06071},
+    archivePrefix={arXiv},
+    primaryClass={cs.AI}
+}
+```
 
