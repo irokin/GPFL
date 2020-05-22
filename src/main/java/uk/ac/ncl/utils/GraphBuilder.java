@@ -139,6 +139,7 @@ public class GraphBuilder {
 
                     if (headNode == null) {
                         headNode = graph.createNode();
+                        if(triple.head.equals(triple.tail)) tailNode = headNode;
                         if (singleProperty) headNode.setProperty("name", triple.head);
                         else setProperties(triple.headProperties, headNode);
                         if (triple.headLabels.isEmpty()) headNode.addLabel(Label.label("Entity"));
