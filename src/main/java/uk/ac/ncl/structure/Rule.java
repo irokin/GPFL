@@ -8,12 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Rule {
-    protected boolean closed;
-    protected boolean fromSubject;
+    public boolean closed;
+    public boolean fromSubject;
     public Atom head;
-    public List<Atom> bodyAtoms;
+    public List<Atom> bodyAtoms = new ArrayList<>();
     public RuleStats stats = new RuleStats();
-    protected int type;
+    public int type;
+    public int index;
 
     Rule() {}
 
@@ -176,13 +177,13 @@ public abstract class Rule {
         public double validTotalPredictions = 0d;
         public double validPredictions = 0d;
 
-        private double standardConf;
-        private double smoothedConf;
-        private double pcaConf;
-        private double apcaConf;
-        private double headCoverage;
-        private double validPrecision;
-        private double precision;
+        public double standardConf;
+        public double smoothedConf;
+        public double pcaConf;
+        public double apcaConf;
+        public double headCoverage;
+        public double validPrecision;
+        public double precision;
 
         @Override
         public String toString() {

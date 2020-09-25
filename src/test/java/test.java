@@ -12,7 +12,7 @@ public class test {
 
     @Test
     public void run() {
-        File config = new File("data/UWCSE/config.json");
+        File config = new File("data/WN18RR/gpfl_config.json");
         GPFL system = new GPFL(config, "log");
         system.run();
     }

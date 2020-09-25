@@ -2,27 +2,23 @@
   "home": "data/FB15K-237-LV",
   "out": "ins3-car3",
   "target_relation": [],
-  "randomly_selected_relations": 0,
+  "randomly_selected_relations": 5,
   "split_ratio": [0.6, 0.2],
 
-  "learn_groundings": 15000,
-  "apply_groundings": 15000,
   "support": 3,
   "head_coverage": 0.001,
   "conf": 0.001,
-  "ins_depth": 3,
+  "ins_depth": 2,
   "car_depth": 3,
+
   "saturation": 0.99,
   "batch_size": 100000,
-  "thread_number": 8,
+  "thread_number": 6,
   "random_walkers": 10,
-  "ins_rule_cap": 20000000,
-  "suggestion_cap": 20000000,
   "quality_measure": "smoothedConf",
 
-  "essential_time": 60,
-  "spec_time": 120,
-  "gen_time": 40,
+  "spec_time": 60,
+  "gen_time": 30,
 
-  "overfitting_factor": 0
+  "overfitting_factor": 0.01
 }

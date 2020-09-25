@@ -1,5 +1,6 @@
 package uk.ac.ncl.structure;
 
+import com.google.common.collect.BiMap;
 import uk.ac.ncl.Settings;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Path;
@@ -62,6 +63,14 @@ public class Pair {
     public Pair(String subName, String relName, String objName) {
         this(subName, objName);
         typeName = relName;
+    }
+
+    public Pair(String[] words, BiMap<String, Long> nodeIndex) {
+        this.subName = words[0];
+        this.subId = nodeIndex.get(subName);
+        this.objName = words[2];
+        this.objId = nodeIndex.get(objName);
+        this.type = RelationshipType.withName(words[1]);
     }
 
     public boolean isSelfloop() {

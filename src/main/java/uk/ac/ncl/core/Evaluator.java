@@ -164,7 +164,7 @@ public class Evaluator {
         }
     }
 
-    static private void printAverageResults(Multimap<String, Double> perPredicateResults) {
+    static public void printAverageResults(Multimap<String, Double> perPredicateResults) {
         DecimalFormat f = new DecimalFormat("###.####");
         f.setMinimumFractionDigits(4);
         StringBuilder sb = new StringBuilder("# " + "GPFL Protocol - All Targets:\n"
@@ -200,7 +200,7 @@ public class Evaluator {
         Logger.println(sb.toString(), 1);
     }
 
-    static private void printResultsSinglePredicate(String predicate, List<Integer> headRanks, List<Integer> tailRanks
+    static public void printResultsSinglePredicate(String predicate, List<Integer> headRanks, List<Integer> tailRanks
             , List<Integer> allRanks, int verb, Multimap<String, Double> perPredicateResults, boolean add) {
         DecimalFormat f = new DecimalFormat("###.####");
         double headScore, tailScore, allScore;

@@ -19,6 +19,8 @@ public class Atom {
     public String object;
     public long objectId;
 
+    public Atom() {}
+
     public Atom(String line, boolean head) {
         predicate = line.split("\\(")[0];
         String[] words = line.split("\\(")[1].split(",");

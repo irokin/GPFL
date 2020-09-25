@@ -4,6 +4,7 @@ import uk.ac.ncl.Settings;
 import uk.ac.ncl.structure.*;
 import uk.ac.ncl.utils.Helpers;
 import uk.ac.ncl.utils.IO;
+import uk.ac.ncl.utils.Logger;
 import uk.ac.ncl.utils.MathUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
@@ -285,9 +286,11 @@ public class GraphOps {
             , boolean checkTail, boolean application, Supplier<Boolean> stoppingCondition) {
         if(path.length() >= pattern.length()) {
             if(checkTail && pattern.getTailAnchoring() != path.getEndNode().getId()) return;
+
             pairs.add(new Pair(path.getStartNode().getId(), path.getEndNode().getId()));
-            int groundingCap = application ? Settings.APPLY_GROUNDINGS : Settings.LEARN_GROUNDINGS;
-            if(pairs.size() >= groundingCap)
+
+            int groundingCap = application ? Integer.MAX_VALUE : Settings.LEARN_GROUNDINGS;
+            if(pairs.size() >= groundingCap && pattern.isClosed())
                 stop.flag = true;
         }
         else {
@@ -489,5 +492,45 @@ public class GraphOps {
         public Flag() {
             flag = false;
         }
+    }
+
+    public static String readNeo4jProperty(Node n) {
+        Object o = n.getProperty(Settings.NEO4J_IDENTIFIER);
+        if(!(o instanceof String))
+            return String.valueOf(o);
+        else
+            return (String) o;
+    }
+
+    public static void removeRelationships(Set<Pair> pairs, GraphDatabaseService graph) {
+        int count = 0;
+        try(Transaction tx = graph.beginTx()) {
+            for (Pair pair : pairs) {
+                Node s = graph.getNodeById(pair.subId);
+                Node e = graph.getNodeById(pair.objId);
+                for (Relationship r : s.getRelationships(Direction.OUTGOING, RelationshipType.withName(Settings.TARGET))) {
+                    if(r.getOtherNode(s).equals(e)) {
+                        r.delete();
+                        count++;
+                    }
+                }
+            }
+            tx.success();
+        }
+//        Logger.println("# Removed validation and test relationships: " + count);
+    }
+
+    public static void addRelationships(Set<Pair> pairs, GraphDatabaseService graph) {
+        int count = 0;
+        try(Transaction tx = graph.beginTx()) {
+            for (Pair pair : pairs) {
+                Node s = graph.getNodeById(pair.subId);
+                Node e = graph.getNodeById(pair.objId);
+                s.createRelationshipTo(e, RelationshipType.withName(Settings.TARGET));
+                count++;
+            }
+            tx.success();
+        }
+//        Logger.println("# Added validation and test relationships back: " + count);
     }
 }

@@ -1,6 +1,9 @@
 package uk.ac.ncl.utils;
 
+import com.google.common.collect.BiMap;
+import org.neo4j.graphdb.*;
 import uk.ac.ncl.Settings;
+import uk.ac.ncl.core.Context;
 import uk.ac.ncl.structure.*;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
@@ -8,9 +11,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import uk.ac.ncl.structure.*;
 
@@ -18,6 +18,7 @@ import java.io.*;
 import java.text.DecimalFormat;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class IO {
@@ -202,8 +203,15 @@ public class IO {
         Set<String> targets = new HashSet<>();
         try(LineIterator l = FileUtils.lineIterator(file)) {
             while(l.hasNext()) {
-                String line = l.nextLine();
-                targets.add(line.split("\t")[2]);
+                String[] words = l.nextLine().split("\t");
+                if(words.length == 4)
+                    targets.add(words[2]);
+                else if(words.length == 3)
+                    targets.add(words[1]);
+                else {
+                    System.err.println("# Invalid triples.");
+                    System.exit(-1);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -497,4 +505,160 @@ public class IO {
         }
         return ((double) functionalCount / subToObjs.keySet().size()) >= 0.9d;
     }
+
+    public static Set<Pair> readExamples(File f, BiMap<String, Long> nodeIndex) {
+        Set<Pair> pairs = new HashSet<>();
+        try(LineIterator l = FileUtils.lineIterator(f)) {
+            while(l.hasNext()) {
+                String[] words = l.next().split("\t");
+                if(words[1].equals(Settings.TARGET))
+                    pairs.add(new Pair(words, nodeIndex));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+        return pairs;
+    }
+
+    public static Comparator<Rule> treeSetRuleQualityComparator(String metric) {
+        return (o1, o2) -> {
+            if(o1.getQuality(metric) - o2.getQuality(metric) >= 0) return -1;
+            return 1;
+        };
+    }
+
+    public static String parseRuleType(Rule rule) {
+        if(rule instanceof Template)
+            return rule.isClosed() ? "CAR" : "OAR";
+        else {
+            return rule.getType() == 0 ? "HAR" : "BAR";
+        }
+    }
+
+    public static Rule parseRuleType(String type) {
+        Rule rule = null;
+        switch (type) {
+            case "CAR":
+                rule = new Template();
+                rule.closed = true;
+                break;
+            case "OAR":
+                rule = new Template();
+                rule.closed = false;
+                break;
+            case "HAR":
+                rule = new InstantiatedRule();
+                rule.closed = false;
+                rule.type = 0;
+                break;
+            case "BAR":
+                rule = new InstantiatedRule();
+                rule.closed = false;
+                rule.type = 2;
+                break;
+        }
+        assert rule != null;
+        return rule;
+    }
+
+    public static String parseAtom(Atom atom) {
+        List<String> words = new ArrayList<>();
+        words.add(atom.direction.equals(Direction.OUTGOING) ? "+" : "-");
+        words.add(atom.predicate);
+        words.add(atom.subject);
+        words.add(atom.object);
+        return String.join(",", words);
+    }
+
+    public static Atom parseAtom(String atomString, BiMap<String, Long> nodeName2Id) {
+        String[] words = atomString.split(",");
+        assert words.length == 4;
+        Atom atom = new Atom();
+        atom.direction = words[0].equals("+") ? Direction.OUTGOING : Direction.INCOMING;
+        atom.predicate = words[1];
+        atom.type = RelationshipType.withName(words[1]);
+        Predicate<String> isConstant = (s) ->
+                !((s.startsWith("V") && s.length() == 2) || (s.equals("X") || s.equals("Y")));
+
+        atom.subject = words[2];
+        atom.subjectId = isConstant.test(atom.subject) ? nodeName2Id.get(atom.subject) : -1;
+
+        atom.object = words[3];
+        atom.objectId = isConstant.test(atom.object) ? nodeName2Id.get(atom.object) : -1;
+        return atom;
+    }
+
+    public static void writeRules(File ruleFile, Collection<Rule> rules) {
+        DecimalFormat f = new DecimalFormat("###.####");
+        try(PrintWriter writer = new PrintWriter(new FileWriter(ruleFile, true))) {
+            for (Rule rule : rules) {
+                List<String> words = new ArrayList<>();
+                words.add(parseRuleType(rule));
+                words.add(parseAtom(rule.head));
+                rule.bodyAtoms.forEach(atom -> words.add(parseAtom(atom)));
+                words.add(f.format(rule.getSmoothedConf()));
+                writer.println(String.join("\t", words));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+    }
+
+    public static List<Rule> readRules(File ruleFile, BiMap<String, Long> nodeName2Id, String target) {
+        List<Rule> rules = new ArrayList<>();
+        try(LineIterator l = FileUtils.lineIterator(ruleFile)) {
+            while(l.hasNext()) {
+                String[] words = l.next().split("\t");
+                Rule rule = parseRuleType(words[0]);
+                rule.head = parseAtom(words[1], nodeName2Id);
+                if(rule.head.predicate.equals(target)) {
+                    for (int i = 2; i < words.length - 1; i++)
+                        rule.bodyAtoms.add(parseAtom(words[i], nodeName2Id));
+                    rule.stats.smoothedConf = Double.parseDouble(words[words.length - 1]);
+                    rule.fromSubject = rule.head.subject.equals("X");
+                    rules.add(rule);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+        return rules;
+    }
+
+    public static Set<String> readTargetsFromRules(File ruleFile, BiMap<String, Long> nodeIndex) {
+        Set<String> targets = new HashSet<>();
+        try(LineIterator l = FileUtils.lineIterator(ruleFile)) {
+            while (l.hasNext()) {
+                targets.add(parseAtom(l.next().split("\t")[1], nodeIndex).predicate);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+        return targets;
+    }
+
+    public static List<Rule> readRawRules(File ruleFile, BiMap<String, Long> nodeName2Id) {
+        List<Rule> rules = new ArrayList<>();
+        try(LineIterator l = FileUtils.lineIterator(ruleFile)) {
+            while(l.hasNext()) {
+                String[] words = l.next().split("\t");
+                Rule rule = parseRuleType(words[1]);
+                rule.index = Integer.parseInt(words[0]);
+                rule.head = parseAtom(words[2], nodeName2Id);
+                for (int i = 3; i < words.length; i++)
+                    rule.bodyAtoms.add(parseAtom(words[i], nodeName2Id));
+                rule.fromSubject = rule.head.subject.equals("X");
+                rules.add(rule);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+        return rules;
+    }
+
 }

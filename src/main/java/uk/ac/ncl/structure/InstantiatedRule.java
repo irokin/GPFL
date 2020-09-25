@@ -2,6 +2,8 @@ package uk.ac.ncl.structure;
 
 public class InstantiatedRule extends Rule {
 
+    public InstantiatedRule() {}
+
     public InstantiatedRule(Rule base, String headAnchoring, long id) {
         super(base.copyHead(), base.copyBody());
         this.type = 0;

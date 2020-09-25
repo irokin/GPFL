@@ -211,4 +211,19 @@ public class Context {
     public synchronized int getEssentialRules() {
         return essentialRules;
     }
+
+    public NavigableSet<Rule> topRules = Collections.synchronizedNavigableSet(
+            new TreeSet<>(IO.treeSetRuleQualityComparator(Settings.QUALITY_MEASURE)));
+
+    public synchronized void addTopRules(Rule rule) {
+        String metric = Settings.QUALITY_MEASURE;
+        if(topRules.size() < Settings.TOP_RULES)
+            topRules.add(rule);
+        else {
+            if(topRules.last().getQuality(metric) < rule.getQuality(metric)) {
+                topRules.pollLast();
+                topRules.add(rule);
+            }
+        }
+    }
 }

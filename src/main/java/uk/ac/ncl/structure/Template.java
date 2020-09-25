@@ -17,6 +17,8 @@ import java.util.concurrent.BlockingQueue;
 public class Template extends Rule {
     public List<SimpleInsRule> insRules = new ArrayList<>();
 
+    public Template() {}
+
     public Template(String line) {
         String[] words = line.split("\t");
         closed = words[1].equals("CAR");
@@ -59,6 +61,70 @@ public class Template extends Rule {
     @Override
     public long getHeadAnchoring() {
         return -1;
+    }
+
+    public void simpleSpec(GraphDatabaseService graph, Set<Pair> groundTruth, Set<Pair> validPair
+            , Multimap<Long, Long> anchoringToOriginal, Multimap<Long, Long> validOriginals
+            , Context context) {
+        CountedSet<Pair> bodyGroundings = GraphOps.bodyGroundingCoreAPI(graph, this
+                , false, GlobalTimer::stopSpec);
+        if(GlobalTimer.stopSpec()) return;
+
+        if(closed) {
+            if(evalClosedRule(bodyGroundings, groundTruth, validPair)) {
+                context.addTopRules(this);
+                context.addSpecializedRules(this);
+            }
+        }
+        else {
+            boolean valid = false;
+
+            stats.groundTruth = groundTruth.size();
+            Multimap<Long, Long> originalToTail = MultimapBuilder.hashKeys().hashSetValues().build();
+            Multimap<Long, Long> tailToOriginal = MultimapBuilder.hashKeys().hashSetValues().build();
+            for (Pair bodyGrounding : bodyGroundings) {
+                originalToTail.put(bodyGrounding.subId, bodyGrounding.objId);
+                tailToOriginal.put(bodyGrounding.objId, bodyGrounding.subId);
+            }
+            Set<Long> groundingOriginals = originalToTail.keySet();
+
+            for (Long anchoring : anchoringToOriginal.keySet()) {
+                if(GlobalTimer.stopSpec()) break;
+
+                Set<Pair> visited = new HashSet<>();
+                String headName = (String) graph.getNodeById(anchoring).getProperty(Settings.NEO4J_IDENTIFIER);
+                Rule HAR = new InstantiatedRule(this, headName, anchoring);
+                if(evaluateRule(HAR, anchoringToOriginal.get(anchoring), validOriginals.get(anchoring), groundingOriginals)) {
+                    valid = true;
+                    context.addTopRules(HAR);
+                    context.updateTotalInsRules();
+                }
+
+                for (Long original : anchoringToOriginal.get(anchoring)) {
+                    if(GlobalTimer.stopSpec()) break;
+
+                    for (Long tail : originalToTail.get(original)) {
+                        if(GlobalTimer.stopSpec()) break;
+                        Pair candidate = new Pair(anchoring, tail);
+                        if(!visited.contains(candidate) && !trivialCheck(anchoring, tail)) {
+                            visited.add(new Pair(anchoring, tail));
+                            candidate.subName = headName;
+                            candidate.objName = (String) graph.getNodeById(tail).getProperty(Settings.NEO4J_IDENTIFIER);
+                            Rule BAR = new InstantiatedRule(this, candidate);
+                            if (evaluateRule(BAR, anchoringToOriginal.get(anchoring), validOriginals.get(anchoring), tailToOriginal.get(tail))) {
+                                valid = true;
+                                context.addTopRules(BAR);
+                                context.updateTotalInsRules();
+                            }
+                        }
+                    }
+                }
+            }
+
+            stats.compute();
+            if(valid)
+                context.addSpecializedRules(this);
+        }
     }
 
     public void specialization(GraphDatabaseService graph, Set<Pair> groundTruth, Set<Pair> validPair

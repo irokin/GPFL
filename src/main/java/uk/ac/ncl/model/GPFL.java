@@ -2,13 +2,11 @@ package uk.ac.ncl.model;
 
 import uk.ac.ncl.Settings;
 import uk.ac.ncl.core.*;
-import uk.ac.ncl.structure.*;
 import uk.ac.ncl.utils.Helpers;
 import uk.ac.ncl.utils.IO;
 import uk.ac.ncl.utils.Logger;
 import com.google.common.collect.Multimap;
 import org.neo4j.graphdb.Transaction;
-import uk.ac.ncl.core.*;
 import uk.ac.ncl.structure.Pair;
 import uk.ac.ncl.structure.Triple;
 
@@ -49,7 +47,6 @@ public class GPFL extends Engine {
             try (Transaction tx = graph.beginTx()) {
                 Set<Pair> trainPairs = IO.readPair(graph, trainFile, target);
                 Settings.TARGET_FUNCTIONAL = IO.isTargetFunctional(trainPairs);
-
                 Set<Pair> validPairs = IO.readPair(graph, validFile, target);
                 Set<Pair> testPairs = IO.readPair(graph, testFile, target);
 

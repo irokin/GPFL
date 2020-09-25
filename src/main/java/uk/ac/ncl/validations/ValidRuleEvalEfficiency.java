@@ -3,7 +3,6 @@ package uk.ac.ncl.validations;
 import uk.ac.ncl.core.Engine;
 import uk.ac.ncl.core.GraphOps;
 import uk.ac.ncl.structure.*;
-import uk.ac.ncl.structure.*;
 import uk.ac.ncl.utils.IO;
 import uk.ac.ncl.utils.Logger;
 import uk.ac.ncl.utils.MathUtils;

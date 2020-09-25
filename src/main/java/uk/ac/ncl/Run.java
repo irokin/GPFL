@@ -3,6 +3,7 @@ package uk.ac.ncl;
 import uk.ac.ncl.core.Engine;
 import uk.ac.ncl.core.Evaluator;
 import uk.ac.ncl.model.GPFL;
+import uk.ac.ncl.model.GenSpec;
 import uk.ac.ncl.utils.Helpers;
 import uk.ac.ncl.utils.IO;
 import uk.ac.ncl.validations.Ensemble;
@@ -78,6 +79,8 @@ public class Run {
         options.addOption(Option.builder("ovf").longOpt("overfittingFile")
                 .desc("Create a view of non-overfitting rules and save to refined.txt file.").build());
 
+        options.addOption(Option.builder("gs").longOpt("genspec").desc("Use GenSpec learner.").build());
+
         options.addOption(Option.builder("h").longOpt("help").desc("Print help information.").build());
         String header = "GPFL is a probabilistic rule learner optimized to learn instantiated first-order logic rules from knowledge graphs. " +
                 "For more information, please refer to https://github.com/irokin/GPFL";
@@ -114,61 +117,68 @@ public class Run {
                 JSONObject jsonArgs = Helpers.buildJSONObject(config);
                 String home = jsonArgs.getString("home");
 
-                if (cmd.hasOption("ra")) {
-                    ValidRuleQuality eval = new ValidRuleQuality(config, "rule_analysis");
-                    eval.analyzeRuleComposition();
-                }
+                if(cmd.hasOption("gs")) {
+                    if(cmd.hasOption("r")) {
+                        GenSpec system = new GenSpec(config);
+                        system.run();
+                    }
+                } else {
+                    if (cmd.hasOption("ra")) {
+                        ValidRuleQuality eval = new ValidRuleQuality(config, "rule_analysis");
+                        eval.analyzeRuleComposition();
+                    }
 
-                if (cmd.hasOption("ert")) {
-                    ValidRuleEvalEfficiency eval = new ValidRuleEvalEfficiency(config, "runtime");
-                    eval.eval();
-                }
+                    if (cmd.hasOption("ert")) {
+                        ValidRuleEvalEfficiency eval = new ValidRuleEvalEfficiency(config, "runtime");
+                        eval.eval();
+                    }
 
-                if (cmd.hasOption("p")) {
-                    ValidRuleQuality eval = new ValidRuleQuality(config, "rule_quality");
-                    eval.evalPrecision();
-                }
+                    if (cmd.hasOption("p")) {
+                        ValidRuleQuality eval = new ValidRuleQuality(config, "rule_quality");
+                        eval.evalPrecision();
+                    }
 
-                if (cmd.hasOption("bg"))
-                    Engine.buildGraph(home).shutdown();
+                    if (cmd.hasOption("bg"))
+                        Engine.buildGraph(home).shutdown();
 
-                if (cmd.hasOption("sg"))
-                    Engine.createRandomSplitsFromGraph(config).shutdown();
+                    if (cmd.hasOption("sg"))
+                        Engine.createRandomSplitsFromGraph(config).shutdown();
 
-                if (cmd.hasOption("sf"))
-                    Engine.createRandomSplitsFromFiles(config);
+                    if (cmd.hasOption("sf"))
+                        Engine.createRandomSplitsFromFiles(config);
 
-                if (cmd.hasOption("st")) {
-                    Engine.selectTargets(config);
-                }
+                    if (cmd.hasOption("st")) {
+                        Engine.selectTargets(config);
+                    }
 
-                if (cmd.hasOption("ov")) {
-                    ValidRuleQuality eval = new ValidRuleQuality(config, "overfit_analysis");
-                    eval.overfittingEval();
-                }
+                    if (cmd.hasOption("ov")) {
+                        ValidRuleQuality eval = new ValidRuleQuality(config, "overfit_analysis");
+                        eval.overfittingEval();
+                    }
 
-                if (cmd.hasOption("r")) {
-                    GPFL system = new GPFL(config, "log");
-                    system.run();
-                }
+                    if (cmd.hasOption("r")) {
+                        GPFL system = new GPFL(config, "log");
+                        system.run();
+                    }
 
-                if (cmd.hasOption("l")) {
-                    GPFL system = new GPFL(config, "learn_log");
-                    system.learn();
-                }
+                    if (cmd.hasOption("l")) {
+                        GPFL system = new GPFL(config, "learn_log");
+                        system.learn();
+                    }
 
-                if (cmd.hasOption("a")) {
-                    GPFL system = new GPFL(config, "apply_log");
-                    system.apply();
-                }
+                    if (cmd.hasOption("a")) {
+                        GPFL system = new GPFL(config, "apply_log");
+                        system.apply();
+                    }
 
-                if (cmd.hasOption("en")) {
-                    Ensemble ensemble = new Ensemble(config, "ensemble");
-                    ensemble.selectBestSolutions();
-                }
+                    if (cmd.hasOption("en")) {
+                        Ensemble ensemble = new Ensemble(config, "ensemble");
+                        ensemble.selectBestSolutions();
+                    }
 
-                if (cmd.hasOption("ovf")) {
-                    IO.filterNonOverfittingRules(config);
+                    if (cmd.hasOption("ovf")) {
+                        IO.filterNonOverfittingRules(config);
+                    }
                 }
             }
         } catch (ParseException e) {

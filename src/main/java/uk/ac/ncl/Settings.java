@@ -6,11 +6,13 @@ public class Settings {
     public static String VERSION = "public-0.1";
     public static String DATE = "May-2020";
 
+    // GenSpec Settings
+    public static int COVER_REPEATS = 30000;
+    public static int TOP_RULES = 1000000;
+
     // Global Booleans
     public static boolean PRIOR_FILTERING = true;
     public static boolean POST_FILTERING = false;
-
-    // Experimental Settings
 
     /**
      * Max number of instantiated rules allowed to be learned for a target.
@@ -55,7 +57,7 @@ public class Settings {
      * - GPFL: Taking the average of the score over all relation types.
      * - All: Print results of all protocols.
      */
-    public static String EVAL_PROTOCOL = "All";
+    public static String EVAL_PROTOCOL = "TransE";
 
     public static int MAX_RECURSION_DEPTH = 1000;
 
@@ -77,7 +79,7 @@ public class Settings {
      * The max number of groundings for evaluating abstract rules.
      * when = 0, the system finds all groundings of rules.
      */
-    public static int LEARN_GROUNDINGS = Integer.MAX_VALUE;
+    public static int LEARN_GROUNDINGS = 100000;
 
     /**
      * The max number of groundings for suggesting predicted facts.
