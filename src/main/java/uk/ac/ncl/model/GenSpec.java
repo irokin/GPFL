@@ -468,7 +468,6 @@ public class GenSpec extends Engine {
             while(true) {
                 if(outputQueue.containsKey(current)) {
                     Package p = outputQueue.remove(current);
-//                    System.out.println("# Processed " + current);
                     current++;
                     if(!p.candidates.isEmpty())
                         tripleSet.updateTestCases(p);
@@ -646,9 +645,6 @@ public class GenSpec extends Engine {
         public List<Pair> getTopPairs(int k) {
             List<Pair> list = new ArrayList<>();
             for (Set<Pair> s : tree.asGroups()) {
-                if(s.contains(testPair))
-                    list.add(testPair);
-
                 for (Pair pair : s) {
                     if(list.size() < k && !list.contains(pair))
                         list.add(pair);
