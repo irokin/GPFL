@@ -467,7 +467,9 @@ public class GenSpec extends Engine {
 
             while(true) {
                 if(outputQueue.containsKey(current)) {
-                    Package p = outputQueue.remove(current++);
+                    Package p = outputQueue.remove(current);
+//                    System.out.println("# Processed " + current);
+                    current++;
                     if(!p.candidates.isEmpty())
                         tripleSet.updateTestCases(p);
                         converge = tripleSet.converge();
@@ -614,21 +616,31 @@ public class GenSpec extends Engine {
         }
 
         public void updateTree(Set<Pair> candidates, Rule r) {
-            candidates.forEach(c -> pairRuleMap.put(c, r));
-            tree.add(candidates);
+            Set<Pair> filterCandidates = new HashSet<>();
+            if(targetGroup.size() > 1) {
+                candidates.forEach(c -> {
+                    if(targetGroup.contains(c)) filterCandidates.add(c);
+                });
+            } else {
+                filterCandidates.addAll(candidates);
+            }
+
+            filterCandidates.forEach(c -> pairRuleMap.put(c, r));
+            tree.add(filterCandidates);
         }
 
+        Set<Pair> targetGroup = new HashSet<>();
         public boolean covered() {
             int countBeforeTestCase = 0;
             for (Set<Pair> group : tree.asGroups()) {
                 if(group.contains(testPair)) {
+                    targetGroup = group;
                     return group.size() == 1;
                 } else {
                     countBeforeTestCase += group.size();
-                    return countBeforeTestCase > Settings.TOP_K;
                 }
             }
-            return false;
+            return countBeforeTestCase > Settings.TOP_K;
         }
 
         public List<Pair> getTopPairs(int k) {
