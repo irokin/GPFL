@@ -127,8 +127,8 @@ public class GenSpec extends Engine {
 
             IO.writeRules(ruleFile, context.topRules);
 
-            GraphOps.addRelationships(validPairs, graph);
-            GraphOps.addRelationships(testPairs, graph);
+//            GraphOps.addRelationships(validPairs, graph);
+//            GraphOps.addRelationships(testPairs, graph);
         }
     }
 
@@ -164,8 +164,8 @@ public class GenSpec extends Engine {
             ruleApplication(tripleSet, rules);
             writeQueries(tripleSet);
 
-            GraphOps.addRelationships(validPairs, graph);
-            GraphOps.addRelationships(testPairs, graph);
+//            GraphOps.addRelationships(validPairs, graph);
+//            GraphOps.addRelationships(testPairs, graph);
         }
 
         Logger.println("");
@@ -326,6 +326,7 @@ public class GenSpec extends Engine {
         @Override
         public void run() {
             try(Transaction tx = graph.beginTx()) {
+                Thread.sleep(500);
                 while (dispatcher.isAlive() && !inputQueue.isEmpty()) {
                     if (outputQueue.size() < 3000) {
                         Package p = inputQueue.poll();
@@ -336,6 +337,9 @@ public class GenSpec extends Engine {
                     }
                 }
                 tx.success();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                System.exit(-1);
             }
         }
 
@@ -420,7 +424,6 @@ public class GenSpec extends Engine {
             int allRules = inputQueue.size();
             int previous = 0;
             boolean converge = false;
-            boolean empty = false;
 
             while(true) {
                 if(outputQueue.containsKey(current)) {
@@ -435,7 +438,7 @@ public class GenSpec extends Engine {
                 }
                 previous = current;
 
-                empty = inputQueue.isEmpty() && outputQueue.isEmpty();
+                boolean empty = inputQueue.isEmpty() && outputQueue.isEmpty();
                 if(converge) break;
                 else if(empty && current == allRules) break;
             }
@@ -582,9 +585,13 @@ public class GenSpec extends Engine {
             return (coverTestCase) || (coverDistinctCases && coverDistinctGroups);
         }
 
+        // This function dictates the rule application strategy
         public List<Pair> getTopPairs(int k) {
             List<Pair> list = new ArrayList<>();
             for (Set<Pair> s : tree.asGroups()) {
+                // This is critical as the test case could
+                // be ranked after cases with the same score due to
+                // randomness
                 if(s.contains(testPair))
                     list.add(testPair);
 

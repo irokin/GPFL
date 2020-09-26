@@ -7,7 +7,7 @@ public class GenSpecTest {
 
     @Test
     public void runTest() {
-        File config = new File("data/WN18RR/config.json");
+        File config = new File("data/FB15K-237/config.json");
         GenSpec system = new GenSpec(config);
         system.run();
     }
@@ -21,7 +21,7 @@ public class GenSpecTest {
 
     @Test
     public void applyTest() {
-        File config = new File("data/WN18RR/config.json");
+        File config = new File("data/FB15K-237/config.json");
         GenSpec system = new GenSpec(config);
         system.apply();
     }
