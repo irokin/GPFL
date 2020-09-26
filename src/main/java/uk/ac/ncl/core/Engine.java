@@ -63,12 +63,6 @@ public abstract class Engine {
         out.mkdir();
 
         Logger.init(new File(out, logName + ".txt"), false);
-        Logger.println("# Graph Path Feature Learning (GPFL) System\n" +
-                "# Version: " + Settings.VERSION +  " | Date: " + Settings.DATE, 1);
-        Logger.println(MessageFormat.format("# Cores: {0} | JVM RAM: {1}GB | Physical RAM: {2}GB"
-                , runtime.availableProcessors()
-                , Helpers.JVMRam()
-                , Helpers.systemRAM()), 1);
 
         Settings.CONFIDENCE_OFFSET = Helpers.readSetting(args, "conf_offset", Settings.CONFIDENCE_OFFSET);
         Settings.TOP_K = Helpers.readSetting(args, "top_k", Settings.TOP_K);

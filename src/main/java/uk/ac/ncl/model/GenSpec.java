@@ -30,10 +30,50 @@ public class GenSpec extends Engine {
 
     public GenSpec(File config) {
         super(config, "log");
+        Settings.VERSION = "public-gs-0.2";
+        Settings.DATE = "Sep-2020";
+        Logger.println("# Graph Path Feature Learning (GPFL) System\n" +
+                "# Version: " + Settings.VERSION +  " | Date: " + Settings.DATE, 1);
+        Logger.println(MessageFormat.format("# Cores: {0} | JVM RAM: {1}GB | Physical RAM: {2}GB"
+                , runtime.availableProcessors()
+                , Helpers.JVMRam()
+                , Helpers.systemRAM()), 1);
+
         Settings.COVER_REPEATS = Helpers.readSetting(args, "cover_repeat", Settings.COVER_REPEATS);
         Settings.TOP_RULES = Helpers.readSetting(args, "top_rules", Settings.TOP_RULES);
-        Settings.VERSION = "public-gs-0.2";
-        Helpers.reportSettings();
+        reportSettings();
+    }
+
+    private void reportSettings() {
+        String msg = MessageFormat.format("\n# Settings:\n" +
+                        "# Ins Length = {0} | CAR Length = {1}\n" +
+                        "# Support = {2} | Confidence = {3}\n" +
+                        "# Head Coverage = {4} | Learn Groundings = {5}\n" +
+                        "# Top Rules = {6} | Saturation = {7}\n" +
+                        "# Batch Size = {8} | Spec Time = {9}\n" +
+                        "# Neo4J Identifier = {10} | Confidence Offset = {11}\n" +
+                        "# Overfitting Factor = {12} | Threads = {13}\n" +
+                        "# Random Walkers = {14} | Gen Time = {15}\n" +
+                        "# Quality Measure = {16}"
+                , Settings.INS_DEPTH
+                , Settings.CAR_DEPTH
+                , Settings.SUPPORT
+                , String.valueOf(Settings.CONF)
+                , Settings.HEAD_COVERAGE
+                , Settings.LEARN_GROUNDINGS == Integer.MAX_VALUE ? "Max" : Settings.LEARN_GROUNDINGS
+                , Settings.TOP_RULES
+                , Settings.SATURATION
+                , Settings.BATCH_SIZE
+                , Settings.SPEC_TIME == Integer.MAX_VALUE ? "Max" : Settings.SPEC_TIME
+                , Settings.NEO4J_IDENTIFIER
+                , Settings.CONFIDENCE_OFFSET
+                , Settings.OVERFITTING_FACTOR
+                , Settings.THREAD_NUMBER
+                , Settings.RANDOM_WALKERS
+                , Settings.GEN_TIME == Integer.MAX_VALUE ? "Max" : Settings.GEN_TIME
+                , Settings.QUALITY_MEASURE
+        );
+        Logger.println(msg, 1);
     }
 
     BiMap<String, Long> nodeIndex = HashBiMap.create();
@@ -579,19 +619,21 @@ public class GenSpec extends Engine {
         }
 
         public boolean covered() {
-            boolean coverDistinctCases = pairRuleMap.keySet().size() > Settings.TOP_K;
-            boolean coverDistinctGroups = tree.asGroups().size() > Settings.TOP_K;
-            boolean coverTestCase = pairRuleMap.keySet().contains(testPair);
-            return (coverTestCase) || (coverDistinctCases && coverDistinctGroups);
+            int countBeforeTestCase = 0;
+            for (Set<Pair> group : tree.asGroups()) {
+                if(group.contains(testPair)) {
+                    return group.size() == 1;
+                } else {
+                    countBeforeTestCase += group.size();
+                    return countBeforeTestCase > Settings.TOP_K;
+                }
+            }
+            return false;
         }
 
-        // This function dictates the rule application strategy
         public List<Pair> getTopPairs(int k) {
             List<Pair> list = new ArrayList<>();
             for (Set<Pair> s : tree.asGroups()) {
-                // This is critical as the test case could
-                // be ranked after cases with the same score due to
-                // randomness
                 if(s.contains(testPair))
                     list.add(testPair);
 

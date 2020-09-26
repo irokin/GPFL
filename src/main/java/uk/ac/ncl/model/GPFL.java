@@ -18,6 +18,13 @@ public class GPFL extends Engine {
 
     public GPFL(File config, String logName) {
         super(config, logName);
+        Logger.println("# Graph Path Feature Learning (GPFL) System\n" +
+                "# Version: " + Settings.VERSION +  " | Date: " + Settings.DATE, 1);
+        Logger.println(MessageFormat.format("# Cores: {0} | JVM RAM: {1}GB | Physical RAM: {2}GB"
+                , runtime.availableProcessors()
+                , Helpers.JVMRam()
+                , Helpers.systemRAM()), 1);
+
         Helpers.reportSettings();
     }
 

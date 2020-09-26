@@ -7,8 +7,8 @@
 
   "learn_groundings": 5000,
   "conf": 0.001,
-  "support": 3,
-  "head_coverage": 0.001,
+  "support": 2,
+  "head_coverage": 0.0001,
   "overfitting_factor": 0,
 
   "saturation": 0.99,
