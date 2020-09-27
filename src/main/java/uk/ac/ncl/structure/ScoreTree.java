@@ -32,11 +32,12 @@ public class ScoreTree<E> {
             }
             candidates.removeAll(known);
 
-            if (!known.isEmpty()) children.add(new ScoreTree<>(known));
+            if (!known.isEmpty())
+                children.add(new ScoreTree<>(known));
         }
     }
 
-    public List<Set<E>> asGroups() {
+    public List<Set<E>> getList() {
         assert values == null;
         List<Set<E>> list = new ArrayList<>();
         children.forEach(c -> c.populateList(list));
@@ -50,6 +51,6 @@ public class ScoreTree<E> {
     }
 
     public int size() {
-        return asGroups().size();
+        return getList().size();
     }
 }

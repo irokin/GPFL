@@ -18,7 +18,6 @@ public class JavaTests {
         root.add(Sets.newHashSet("c"));
         root.add(Sets.newHashSet("e"));
         root.add(Sets.newHashSet("g"));
-        root.add(Sets.newHashSet("b"));
         root.asGroups().forEach(System.out::println);
         System.out.println(root.size());
     }
@@ -155,4 +154,47 @@ public class JavaTests {
             this.item = item;
         }
     }
+
+    @Test
+    public void queueTest() {
+        ScoreList<String> root = new ScoreList<>();
+        root.add(Sets.newHashSet("a", "b", "c", "d", "e", "f"));
+        root.add(Sets.newHashSet("a", "b", "c"));
+        root.add(Sets.newHashSet("a", "b"));
+        root.add(Sets.newHashSet("f"));
+        root.add(Sets.newHashSet("c"));
+        root.add(Sets.newHashSet("e"));
+        root.add(Sets.newHashSet("g"));
+
+        root.list.forEach(System.out::println);
+    }
+
+    static class ScoreList<E> {
+        List<Set<E>> list = new ArrayList<>();
+
+        public ScoreList() {}
+
+        public void add(Set<E> candidates) {
+            List<Set<E>> temp = new ArrayList<>(list);
+            Set<E> unassigned = new HashSet<>(candidates);
+            for (Set<E> e : list) {
+                Set<E> backwardBuffer = new HashSet<>();
+                for (E candidate : candidates) {
+                    if(e.contains(candidate)) {
+                        backwardBuffer.add(candidate);
+                        unassigned.remove(candidate);
+                    }
+                }
+                if(!backwardBuffer.isEmpty() && backwardBuffer.size() != e.size()) {
+                    e.removeAll(backwardBuffer);
+                    temp.add(temp.indexOf(e), backwardBuffer);
+                }
+            }
+            if(!unassigned.isEmpty())
+                temp.add(unassigned);
+            list = temp;
+        }
+    }
+
+
 }

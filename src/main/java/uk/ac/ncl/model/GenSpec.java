@@ -568,7 +568,7 @@ public class GenSpec extends Engine {
             }
 
             for (Map.Entry<TestQuery, Collection<Pair>> entry : distMap.asMap().entrySet()) {
-                entry.getKey().updateTree(new HashSet<>(entry.getValue()), p.rule);
+                entry.getKey().updateScoreList(new HashSet<>(entry.getValue()), p.rule);
             }
 
             for (TestQuery testQuery : testQueries) {
@@ -605,17 +605,19 @@ public class GenSpec extends Engine {
     static class TestQuery {
         Pair testPair;
         boolean headQuery;
-        ScoreTree<Pair> tree;
+        ScoreList<Pair> scoreList;
+
         Multimap<Pair, Rule> pairRuleMap = MultimapBuilder.hashKeys().hashSetValues().build();
 
         public TestQuery(Pair testPair, boolean headQuery) {
             this.testPair = testPair;
             this.headQuery = headQuery;
-            tree= new ScoreTree<>();
+            scoreList = new ScoreList<>();
         }
 
-        public void updateTree(Set<Pair> candidates, Rule r) {
+        public void updateScoreList(Set<Pair> candidates, Rule r) {
             Set<Pair> filterCandidates = new HashSet<>();
+            Set<Pair> targetGroup = getTargetGroup();
             if(targetGroup.size() > 1) {
                 candidates.forEach(c -> {
                     if(targetGroup.contains(c)) filterCandidates.add(c);
@@ -625,16 +627,20 @@ public class GenSpec extends Engine {
             }
 
             filterCandidates.forEach(c -> pairRuleMap.put(c, r));
-            tree.add(filterCandidates);
+            scoreList.add(filterCandidates);
         }
 
-        Set<Pair> targetGroup = new HashSet<>();
+        private Set<Pair> getTargetGroup() {
+            for (Set<Pair> group : scoreList.getList())
+                if(group.contains(testPair)) return group;
+            return new HashSet<>();
+        }
+
         public boolean covered() {
             int countBeforeTestCase = 0;
-            for (Set<Pair> group : tree.asGroups()) {
+            for (Set<Pair> group : scoreList.getList()) {
                 if(group.contains(testPair)) {
-                    targetGroup = group;
-                    return group.size() == 1;
+                    return group.size() == 1 || countBeforeTestCase > Settings.TOP_K;
                 } else {
                     countBeforeTestCase += group.size();
                 }
@@ -644,16 +650,14 @@ public class GenSpec extends Engine {
 
         public List<Pair> getTopPairs(int k) {
             List<Pair> list = new ArrayList<>();
-            for (Set<Pair> s : tree.asGroups()) {
+            for (Set<Pair> s : scoreList.getList()) {
                 for (Pair pair : s) {
-                    if(list.size() < k && !list.contains(pair))
+                    if(list.size() < k && !list.contains(pair)) {
                         list.add(pair);
-                    else
-                        break;
+                        if(list.size() >= k)
+                            break;
+                    }
                 }
-
-                if(list.size() >= k)
-                    break;
             }
             return list;
         }
@@ -756,11 +760,136 @@ public class GenSpec extends Engine {
                     if(abstractRule != null) {
                         Multimap<Long, Long> anchoringToOriginalMap = abstractRule.isFromSubject() ? objOriginalMap : subOriginalMap;
                         Multimap<Long, Long> validOriginals = abstractRule.isFromSubject() ? validObjToSub : validSubToObj;
-                        abstractRule.simpleSpec(graph, trainPairs, validPairs, anchoringToOriginalMap, validOriginals, context);
+                        Specialization(abstractRule, graph, trainPairs, validPairs, anchoringToOriginalMap, validOriginals, context);
                     }
                 }
                 tx.success();
             }
+        }
+
+        public void Specialization(Rule rule, GraphDatabaseService graph, Set<Pair> groundTruth, Set<Pair> validPair
+                , Multimap<Long, Long> anchoringToOriginal, Multimap<Long, Long> validOriginals
+                , Context context) {
+            CountedSet<Pair> bodyGroundings = GraphOps.bodyGroundingCoreAPI(graph, rule, false, GlobalTimer::stopSpec);
+            if(GlobalTimer.stopSpec()) return;
+
+            if(rule.closed) {
+                if(evalClosedRule(rule, bodyGroundings, groundTruth, validPair)) {
+                    context.addTopRules(rule);
+                    context.addSpecializedRules(rule);
+                }
+            }
+            else {
+                boolean valid = false;
+
+                rule.stats.groundTruth = groundTruth.size();
+                Multimap<Long, Long> originalToTail = MultimapBuilder.hashKeys().hashSetValues().build();
+                Multimap<Long, Long> tailToOriginal = MultimapBuilder.hashKeys().hashSetValues().build();
+                for (Pair bodyGrounding : bodyGroundings) {
+                    originalToTail.put(bodyGrounding.subId, bodyGrounding.objId);
+                    tailToOriginal.put(bodyGrounding.objId, bodyGrounding.subId);
+                }
+                Set<Long> groundingOriginals = originalToTail.keySet();
+
+                for (Long anchoring : anchoringToOriginal.keySet()) {
+                    if(GlobalTimer.stopSpec()) break;
+
+                    Set<Pair> visited = new HashSet<>();
+                    String headName = (String) graph.getNodeById(anchoring).getProperty(Settings.NEO4J_IDENTIFIER);
+                    Rule HAR = new InstantiatedRule(rule, headName, anchoring);
+                    if(evaluateRule(HAR, anchoringToOriginal.get(anchoring), validOriginals.get(anchoring), groundingOriginals)) {
+                        valid = true;
+                        context.addTopRules(HAR);
+                        context.updateTotalInsRules();
+                    }
+
+                    for (Long original : anchoringToOriginal.get(anchoring)) {
+                        if(GlobalTimer.stopSpec()) break;
+
+                        for (Long tail : originalToTail.get(original)) {
+                            if(GlobalTimer.stopSpec()) break;
+                            Pair candidate = new Pair(anchoring, tail);
+                            if(!visited.contains(candidate) && !trivialCheck(rule, anchoring, tail)) {
+                                visited.add(new Pair(anchoring, tail));
+                                candidate.subName = headName;
+                                candidate.objName = (String) graph.getNodeById(tail).getProperty(Settings.NEO4J_IDENTIFIER);
+                                Rule BAR = new InstantiatedRule(rule, candidate);
+                                if (evaluateRule(BAR, anchoringToOriginal.get(anchoring), validOriginals.get(anchoring), tailToOriginal.get(tail))) {
+                                    valid = true;
+                                    context.addTopRules(BAR);
+                                    context.updateTotalInsRules();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                rule.stats.compute();
+                if(valid)
+                    context.addSpecializedRules(rule);
+            }
+        }
+
+        private boolean evalClosedRule(Rule rule, CountedSet<Pair> bodyGroundings, Set<Pair> groundTruth, Set<Pair> validPair) {
+            double totalPrediction = 0, correctPrediction = 0, pcaTotalPrediction = 0
+                    , validTotalPredictions = 0, validPredictions = 0;
+
+            Set<Long> subs = new HashSet<>();
+            for (Pair pair : groundTruth)
+                subs.add(pair.subId);
+
+            for (Pair grounding : bodyGroundings) {
+                long sub = rule.fromSubject ? grounding.subId : grounding.objId;
+                if(subs.contains(sub))
+                    pcaTotalPrediction++;
+
+                Pair prediction = rule.fromSubject ? grounding : new Pair(grounding.objId, grounding.subId);
+                if(groundTruth.contains(prediction))
+                    correctPrediction++;
+                else {
+                    validTotalPredictions++;
+                    if(validPair.contains(prediction))
+                        validPredictions++;
+                }
+
+                totalPrediction++;
+            }
+
+            rule.setStats(correctPrediction, totalPrediction, pcaTotalPrediction
+                    , groundTruth.size(), validTotalPredictions, validPredictions);
+
+            return qualityCheck(rule);
+        }
+
+        private boolean evaluateRule(Rule rule, Collection<Long> originals, Collection<Long> validOriginals, Collection<Long> groundingOriginals) {
+            int totalPrediction = 0, support = 0, groundTruth = originals.size()
+                    , validTotalPredictions = 0, validPredictions = 0;
+            for (Long groundingOriginal : groundingOriginals) {
+                totalPrediction++;
+                if(originals.contains(groundingOriginal))
+                    support++;
+                else {
+                    validTotalPredictions++;
+                    if(validOriginals.contains(groundingOriginal))
+                        validPredictions++;
+                }
+            }
+            int pcaTotalPredictions = rule.isFromSubject() ? support : totalPrediction;
+            rule.setStats(support, totalPrediction, pcaTotalPredictions, groundTruth, validTotalPredictions, validPredictions);
+            return qualityCheck(rule);
+        }
+
+        private boolean qualityCheck(Rule rule) {
+            return (rule.stats.support >= Settings.SUPPORT)
+                    && (rule.getQuality() >= Settings.CONF)
+                    && (rule.getHeadCoverage() >= Settings.HEAD_COVERAGE)
+                    && (rule.getValidPrecision() >= rule.getQuality() * Settings.OVERFITTING_FACTOR);
+        }
+
+        private boolean trivialCheck(Rule rule, long head, long tail) {
+            if(Settings.ALLOW_INS_REVERSE)
+                return false;
+            return head == tail && rule.length() == 1 && rule.head.predicate.equals(rule.bodyAtoms.get(0).predicate);
         }
     }
 }
