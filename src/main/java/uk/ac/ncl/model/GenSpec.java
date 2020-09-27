@@ -9,7 +9,9 @@ import org.apache.commons.io.LineIterator;
 import org.neo4j.graphdb.*;
 import uk.ac.ncl.Settings;
 import uk.ac.ncl.core.*;
+import uk.ac.ncl.graph.InMemoryGraph;
 import uk.ac.ncl.structure.*;
+import uk.ac.ncl.structure.Package;
 import uk.ac.ncl.utils.Helpers;
 import uk.ac.ncl.utils.IO;
 import uk.ac.ncl.utils.Logger;
@@ -88,6 +90,47 @@ public class GenSpec extends Engine {
         Logger.println("# Indexed " + nodeIndex.size() + " nodes.");
     }
 
+    public void buildGraph() {
+        graph = IO.loadGraph(new File(home, "databases/graph.db"));
+        trainFile = new File(home, "data/train.txt");
+        validFile = new File(home, "data/valid.txt");
+        testFile = new File(home, "data/test.txt");
+//        ruleFile = IO.createEmptyFile(new File(out, "rules.txt"));
+        predictionFile = IO.createEmptyFile(new File(out, "predictions.txt"));
+        verificationFile = IO.createEmptyFile(new File(out, "verifications.txt"));
+        indexing();
+
+        populateTargets();
+        int range = Math.max(Settings.INS_DEPTH, Settings.CAR_DEPTH);
+        GlobalTimer.programStartTime = System.currentTimeMillis();
+
+        for (String target : targets) {
+            Settings.TARGET = target;
+            Context context = new Context();
+
+            Logger.println(MessageFormat.format("\n# ({0}\\{1}) Start Applying Rules for Target: {2}",
+                    globalTargetCounter++, targets.size(), target), 1);
+
+            Set<Pair> trainPairs = IO.readExamples(trainFile, nodeIndex);
+            Set<Pair> validPairs = IO.readExamples(validFile, nodeIndex);
+            Set<Pair> testPairs = IO.readExamples(testFile, nodeIndex);
+            TripleSet tripleSet = new TripleSet(trainPairs, validPairs, testPairs);
+
+            Logger.println(MessageFormat.format("# Train Size: {0} | Valid Size: {1} | Test Size: {2}"
+                    , trainPairs.size(), validPairs.size(), testPairs.size()), 1);
+
+            InMemoryGraph inMemoryGraph = new InMemoryGraph(graph, tripleSet, range);
+
+
+
+//            inMemoryGraph.ruleApplication(rules);
+            writeQueries(tripleSet);
+        }
+
+        Logger.println("");
+        score();
+    }
+
     public void run() {
         graph = IO.loadGraph(new File(home, "databases/graph.db"));
         trainFile = new File(home, "data/train.txt");
@@ -100,6 +143,7 @@ public class GenSpec extends Engine {
 
         populateTargets();
         GlobalTimer.programStartTime = System.currentTimeMillis();
+        int range = Math.max(Settings.INS_DEPTH, Settings.CAR_DEPTH);
 
         for (String target : targets) {
             Settings.TARGET = target;
@@ -124,7 +168,10 @@ public class GenSpec extends Engine {
             IO.writeRules(ruleFile, context.topRules);
 
             List<Rule> rules = new ArrayList<>(context.topRules);
-            ruleApplication(tripleSet, rules);
+            InMemoryGraph inMemoryGraph = new InMemoryGraph(graph, tripleSet, range);
+            inMemoryGraph.ruleApplication(rules);
+
+//            ruleApplication(tripleSet, rules);
             writeQueries(tripleSet);
 
 //            GraphOps.addRelationships(validPairs, graph);
@@ -486,186 +533,6 @@ public class GenSpec extends Engine {
 
             Logger.println(MessageFormat.format("# Visited/All Rules: {0}/{1} | Coverage: {2}",
                     current, allRules, f.format(tripleSet.coverage)));
-        }
-    }
-
-    static class Package {
-        static int globalIndex = 0;
-        public static void resetIndex() {
-            globalIndex = 0;
-        }
-        public static Package create(Rule r) {
-            return new Package(r, globalIndex++);
-        }
-
-        public Set<Pair> candidates;
-        public Rule rule;
-        public int id;
-
-        private Package(Rule rule, int id) {
-            this.rule = rule;
-            this.id = id;
-        }
-    }
-
-    static class TripleSet {
-        Set<Pair> trainPairs;
-        Set<Pair> validPairs;
-        Set<Pair> testPairs;
-
-        Set<TestQuery> testQueries = new HashSet<>();
-        Multimap<Long, TestQuery> headIndex = MultimapBuilder.hashKeys().hashSetValues().build();
-        Multimap<Long, TestQuery> tailIndex = MultimapBuilder.hashKeys().hashSetValues().build();
-
-        Set<Long> testHeads = new HashSet<>();
-        Set<Long> testTails = new HashSet<>();
-
-        public TripleSet(Set<Pair> trainPairs, Set<Pair> validPairs, Set<Pair> testPairs) {
-            this.trainPairs = trainPairs;
-            this.validPairs = validPairs;
-            this.testPairs = testPairs;
-
-            testPairs.forEach(t -> {
-                testHeads.add(t.subId);
-                testTails.add(t.objId);
-
-                TestQuery headQuery = new TestQuery(t, true);
-                TestQuery tailQuery = new TestQuery(t, false);
-
-                testQueries.add(headQuery);
-                testQueries.add(tailQuery);
-
-                headIndex.put(t.subId, tailQuery);
-                tailIndex.put(t.objId, headQuery);
-            });
-        }
-
-        public boolean inNonTest(Pair pair) {
-            return trainPairs.contains(pair) || validPairs.contains(pair);
-        }
-
-        public boolean possibleSolution(Pair pair) {
-            return testHeads.contains(pair.subId) || testTails.contains(pair.objId);
-        }
-
-        public void updateTestCases(Package p) {
-            Multimap<TestQuery, Pair> distMap = MultimapBuilder.hashKeys().hashSetValues().build();
-            for (Pair candidate : p.candidates) {
-                for (TestQuery query : headIndex.get(candidate.subId)) {
-                    if (!testPairs.contains(candidate))
-                        distMap.put(query, candidate);
-                    else if (candidate.equals(query.testPair)) {
-                        distMap.put(query, candidate);
-                    }
-                }
-                for (TestQuery query : tailIndex.get(candidate.objId)) {
-                    if (!testPairs.contains(candidate))
-                        distMap.put(query, candidate);
-                    else if (candidate.equals(query.testPair)) {
-                        distMap.put(query, candidate);
-                    }
-                }
-            }
-
-            for (Map.Entry<TestQuery, Collection<Pair>> entry : distMap.asMap().entrySet()) {
-                entry.getKey().updateScoreList(new HashSet<>(entry.getValue()), p.rule);
-            }
-
-            for (TestQuery testQuery : testQueries) {
-                if(!covered.contains(testQuery) && testQuery.covered())
-                    covered.add(testQuery);
-            }
-
-            covered.forEach(c -> {
-                headIndex.remove(c.testPair.subId, c);
-                tailIndex.remove(c.testPair.objId, c);
-            });
-        }
-
-        Set<TestQuery> covered = new HashSet<>();
-        int convergeRepeat = 0;
-        double coverage = 0;
-        public boolean converge() {
-            double currentCoverage = (double) covered.size() / testQueries.size();
-            if(currentCoverage > 0.999) {
-                coverage = currentCoverage;
-                return true;
-            }
-
-            if(currentCoverage - coverage < 0.01 && coverage != 0)
-                return ++convergeRepeat > Settings.COVER_REPEATS;
-            else
-                convergeRepeat = 0;
-
-            coverage = currentCoverage;
-            return false;
-        }
-    }
-
-    static class TestQuery {
-        Pair testPair;
-        boolean headQuery;
-        ScoreList<Pair> scoreList;
-
-        Multimap<Pair, Rule> pairRuleMap = MultimapBuilder.hashKeys().hashSetValues().build();
-
-        public TestQuery(Pair testPair, boolean headQuery) {
-            this.testPair = testPair;
-            this.headQuery = headQuery;
-            scoreList = new ScoreList<>();
-        }
-
-        public void updateScoreList(Set<Pair> candidates, Rule r) {
-            Set<Pair> filterCandidates = new HashSet<>();
-            Set<Pair> targetGroup = getTargetGroup();
-            if(targetGroup.size() > 1) {
-                candidates.forEach(c -> {
-                    if(targetGroup.contains(c)) filterCandidates.add(c);
-                });
-            } else {
-                filterCandidates.addAll(candidates);
-            }
-
-            filterCandidates.forEach(c -> pairRuleMap.put(c, r));
-            scoreList.add(filterCandidates);
-        }
-
-        private Set<Pair> getTargetGroup() {
-            for (Set<Pair> group : scoreList.getList())
-                if(group.contains(testPair)) return group;
-            return new HashSet<>();
-        }
-
-        public boolean covered() {
-            int countBeforeTestCase = 0;
-            for (Set<Pair> group : scoreList.getList()) {
-                if(group.contains(testPair)) {
-                    return group.size() == 1 || countBeforeTestCase > Settings.TOP_K;
-                } else {
-                    countBeforeTestCase += group.size();
-                }
-            }
-            return countBeforeTestCase > Settings.TOP_K;
-        }
-
-        public List<Pair> getTopPairs(int k) {
-            List<Pair> list = new ArrayList<>();
-            for (Set<Pair> s : scoreList.getList()) {
-                for (Pair pair : s) {
-                    if(list.size() < k && !list.contains(pair)) {
-                        list.add(pair);
-                        if(list.size() >= k)
-                            break;
-                    }
-                }
-            }
-            return list;
-        }
-
-        public List<Rule> getSuggestingRules(Pair p) {
-            List<Rule> rules = new ArrayList<>(pairRuleMap.get(p));
-            rules.sort(IO.ruleComparatorBySC(Settings.QUALITY_MEASURE));
-            return rules;
         }
     }
 

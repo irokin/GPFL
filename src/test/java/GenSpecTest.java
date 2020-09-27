@@ -21,7 +21,7 @@ public class GenSpecTest {
 
     @Test
     public void applyTest() {
-        File config = new File("data/FB15K-237/config.json");
+        File config = new File("data/WN18RR/config.json");
         GenSpec system = new GenSpec(config);
         system.apply();
     }
@@ -31,6 +31,13 @@ public class GenSpecTest {
         File config = new File("data/UWCSE/gs_config.json");
         GenSpec system = new GenSpec(config);
         system.score();
+    }
+
+    @Test
+    public void inMemoryGraphTest() {
+        File config = new File("data/UWCSE/config.json");
+        GenSpec system = new GenSpec(config);
+        system.buildGraph();
     }
 }
 
