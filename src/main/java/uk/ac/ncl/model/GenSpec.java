@@ -230,7 +230,8 @@ public class GenSpec extends Engine {
         indexing();
         int range = Math.max(Settings.INS_DEPTH, Settings.CAR_DEPTH);
 
-        targets = IO.readTargetsFromRules(ruleFile, nodeIndex);
+//        targets = IO.readTargetsFromRules(ruleFile, nodeIndex);
+        populateTargets();
         for (String target : targets) {
             Settings.TARGET = target;
             List<Rule> rules = IO.readRules(ruleFile, nodeIndex, target);
