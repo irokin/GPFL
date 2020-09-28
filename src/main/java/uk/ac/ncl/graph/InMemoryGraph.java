@@ -310,14 +310,17 @@ public class InMemoryGraph {
                 if(outputQueue.containsKey(current)) {
                     Package p = outputQueue.remove(current);
                     current++;
-                    if(!p.candidates.isEmpty())
+                    if(!p.candidates.isEmpty()) {
                         tripleSet.updateTestCases(p);
+
+                        System.out.println(p.rule + "\t" + current);
+                    }
                     converge = tripleSet.converge();
                 }
 
-                if(current % 5000 == 0 && current != previous) {
-                    Logger.println("# Visited " + current + " Rules | Coverage: " + f.format(tripleSet.coverage));
-                }
+//                if(current % 5000 == 0 && current != previous) {
+//                    Logger.println("# Visited " + current + " Rules | Coverage: " + f.format(tripleSet.coverage));
+//                }
                 previous = current;
 
                 boolean empty = inputQueue.isEmpty() && outputQueue.isEmpty();

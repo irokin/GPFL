@@ -228,6 +228,7 @@ public class GenSpec extends Engine {
         predictionFile = IO.createEmptyFile(new File(out, "predictions.txt"));
         verificationFile = IO.createEmptyFile(new File(out, "verifications.txt"));
         indexing();
+        int range = Math.max(Settings.INS_DEPTH, Settings.CAR_DEPTH);
 
         targets = IO.readTargetsFromRules(ruleFile, nodeIndex);
         for (String target : targets) {
@@ -248,7 +249,8 @@ public class GenSpec extends Engine {
             GraphOps.removeRelationships(validPairs, graph);
             GraphOps.removeRelationships(testPairs, graph);
 
-            ruleApplication(tripleSet, rules);
+            InMemoryGraph inMemoryGraph = new InMemoryGraph(graph, tripleSet, range);
+            inMemoryGraph.ruleApplication(rules);
             writeQueries(tripleSet);
 
 //            GraphOps.addRelationships(validPairs, graph);

@@ -122,6 +122,11 @@ public class Run {
                         GenSpec system = new GenSpec(config);
                         system.run();
                     }
+
+                    if(cmd.hasOption("a")) {
+                        GenSpec system = new GenSpec(config);
+                        system.apply();
+                    }
                 } else {
                     if (cmd.hasOption("ra")) {
                         ValidRuleQuality eval = new ValidRuleQuality(config, "rule_analysis");
