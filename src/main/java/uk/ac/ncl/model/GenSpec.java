@@ -167,15 +167,11 @@ public class GenSpec extends Engine {
 
             IO.writeRules(ruleFile, context.topRules);
 
-            List<Rule> rules = new ArrayList<>(context.topRules);
+            List<Rule> rules = ruleFilter(new ArrayList<>(context.topRules), tripleSet);
             InMemoryGraph inMemoryGraph = new InMemoryGraph(graph, tripleSet, range);
             inMemoryGraph.ruleApplication(rules);
 
-//            ruleApplication(tripleSet, rules);
             writeQueries(tripleSet);
-
-//            GraphOps.addRelationships(validPairs, graph);
-//            GraphOps.addRelationships(testPairs, graph);
         }
 
         Logger.println("");
@@ -234,8 +230,6 @@ public class GenSpec extends Engine {
         populateTargets();
         for (String target : targets) {
             Settings.TARGET = target;
-            List<Rule> rules = IO.readRules(ruleFile, nodeIndex, target);
-
             Logger.println(MessageFormat.format("\n# ({0}\\{1}) Start Applying Rules for Target: {2}",
                     globalTargetCounter++, targets.size(), target), 1);
 
@@ -247,19 +241,35 @@ public class GenSpec extends Engine {
             Logger.println(MessageFormat.format("# Train Size: {0} | Valid Size: {1} | Test Size: {2}"
                     , trainPairs.size(), validPairs.size(), testPairs.size()), 1);
 
-            GraphOps.removeRelationships(validPairs, graph);
-            GraphOps.removeRelationships(testPairs, graph);
-
             InMemoryGraph inMemoryGraph = new InMemoryGraph(graph, tripleSet, range);
+            List<Rule> rules = ruleFilter(IO.readRules(ruleFile, nodeIndex, target), tripleSet);
             inMemoryGraph.ruleApplication(rules);
             writeQueries(tripleSet);
-
-//            GraphOps.addRelationships(validPairs, graph);
-//            GraphOps.addRelationships(testPairs, graph);
         }
 
         Logger.println("");
         score();
+    }
+
+    private List<Rule> ruleFilter(List<Rule> rules, TripleSet tripleSet) {
+        int beforeFiltering = rules.size();
+        List<Rule> results = new ArrayList<>();
+        for (Rule rule : rules) {
+            if(rule instanceof InstantiatedRule && rule.getType() == 2) {
+                if(rule.fromSubject) {
+                    if(tripleSet.testTails.contains(rule.getHeadAnchoring()))
+                        results.add(rule);
+                } else {
+                    if(tripleSet.testHeads.contains(rule.getHeadAnchoring()))
+                        results.add(rule);
+                }
+            } else
+                results.add(rule);
+        }
+        int afterFiltering = results.size();
+        Logger.println(MessageFormat.format("# All Rules: {0} | Filtered Rules: {1} | Valid Rules: {2}",
+                beforeFiltering, (beforeFiltering - afterFiltering), afterFiltering));
+        return results;
     }
 
     public void score() {
