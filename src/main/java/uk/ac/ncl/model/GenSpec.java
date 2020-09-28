@@ -56,7 +56,7 @@ public class GenSpec extends Engine {
                         "# Neo4J Identifier = {10} | Confidence Offset = {11}\n" +
                         "# Overfitting Factor = {12} | Threads = {13}\n" +
                         "# Random Walkers = {14} | Gen Time = {15}\n" +
-                        "# Quality Measure = {16}"
+                        "# Quality Measure = {16} | Cover Repeats = {17}"
                 , Settings.INS_DEPTH
                 , Settings.CAR_DEPTH
                 , Settings.SUPPORT
@@ -74,6 +74,7 @@ public class GenSpec extends Engine {
                 , Settings.RANDOM_WALKERS
                 , Settings.GEN_TIME == Integer.MAX_VALUE ? "Max" : Settings.GEN_TIME
                 , Settings.QUALITY_MEASURE
+                , Settings.COVER_REPEATS
         );
         Logger.println(msg, 1);
     }
@@ -120,8 +121,6 @@ public class GenSpec extends Engine {
                     , trainPairs.size(), validPairs.size(), testPairs.size()), 1);
 
             InMemoryGraph inMemoryGraph = new InMemoryGraph(graph, tripleSet, range);
-
-
 
 //            inMemoryGraph.ruleApplication(rules);
             writeQueries(tripleSet);

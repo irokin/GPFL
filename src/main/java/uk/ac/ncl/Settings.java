@@ -7,7 +7,7 @@ public class Settings {
     public static String DATE = "May-2020";
 
     // GenSpec Settings
-    public static int COVER_REPEATS = 3000;
+    public static int COVER_REPEATS = 5000;
     public static int TOP_RULES = 1000000;
 
     // Global Booleans
